@@ -21,6 +21,25 @@
   Slimer.prototype.constructor = Slimer;
 
   //
+  // Game Loop 
+  //
+
+  Slimer.prototype.update = function() {
+    if(this.controls.left.isDown)
+      this.body.velocity.x = -150;
+    else if(this.controls.right.isDown)
+      this.body.velocity.x = 150;
+  }
+
+  //
+  // Controls
+  //
+
+  Slimer.prototype.registerControls = function(type) {
+    this.controls = Slimes.createControls(type);
+  };
+
+  //
   // Preload Hooks
   //
 
