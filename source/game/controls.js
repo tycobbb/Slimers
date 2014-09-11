@@ -20,6 +20,7 @@
       left:  Phaser.Keyboard.J,
       right: Phaser.Keyboard.L
     }
+
   };
 
   Slimes.createControls = function(type) {

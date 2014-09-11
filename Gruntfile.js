@@ -20,7 +20,7 @@ module.exports = function (grunt) {
 
     concat: {
       dist: {
-        src: [  
+        src: [
           "source/lib/**/*.js",
           "source/game/shared/*.js",
           "source/game/**/!(main).js",
@@ -31,7 +31,9 @@ module.exports = function (grunt) {
     },
 
     watch: {
-      files: 'source/**/*.js',
+      files: [ 
+        'source/**/*.js'
+      ],
       tasks: [ 'concat' ]
     },
 

@@ -1,7 +1,10 @@
 
 .DS_Store
 *.db
+
 node_modules/
 bower_components/
+
 psds/
+playground/
 

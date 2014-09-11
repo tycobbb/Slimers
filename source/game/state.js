@@ -20,49 +20,29 @@
     },
 
     create: function() { 
-      this.physics.startSystem(Phaser.Physics.ARCADE);
+      // create the world
+      var world = this.game.physics.startWorld();
       
       // create the game objects 
       var court   = this.add.court(this.world.centerY);
-      var slimer1 = this.add.slimer(this.world.centerX * 0.5, this.world.centerY);
+      var slimer1 = this.add.slimer(this.world.centerX * 0.5, this.world.centerY); 
       var slimer2 = this.add.slimer(this.world.centerX * 1.5, this.world.centerY);
-
+     
+      // register collisions
+      this.game.physics.materials('world').contact('slimer');
+      this.game.physics.materials('slimer').contact('court');
+ 
       // add controls
       slimer1.registerControls(Slimes.ControlsType.PLAYER_ONE);
-      slimer2.registerControls(Slimes.ControlsType.PLAYER_TWO);
-      
-      // register collisions
-      this.addCollider(court, slimer1);
-      this.addCollider(court, slimer2);
+      slimer2.registerControls(Slimes.ControlsType.PLAYER_TWO);  
     },
    
     update: function() {
-      this.collide(); 
+    
     },
 
     render: function() {
       this.game.pixel.render();
-    },
-
-    //
-    // Collisions
-    //
-    
-    addCollider: function(body1, body2) {
-      if(!this.colliders)
-        this.colliders = [];
-      this.colliders.push({ body1: body1, body2: body2 });
-    },
-
-    collide: function() {
-      var self = this;
-
-      if(!self.colliders)
-        return;
-        
-      self.colliders.forEach(function(collider) {
-        self.game.physics.arcade.collide(collider.body1, collider.body2);
-      });
     },
 
   };

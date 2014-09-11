@@ -5,15 +5,20 @@
 (function(Slimes) {
 
   function Court(game, y) {
-    Phaser.Sprite.call(this, game, 0, y, 'ground');
+    Phaser.Sprite.call(this, game, 0.0, y, 'ground');
 
     // dimensions
     this.width  = game.world.width;
     this.height = game.world.height - y;
 
     // physics
-    game.physics.enable(this);
-    this.body.immovable = true;
+    this.game.physics.p2.enable(this);
+    this.body.static        = true;
+    this.body.fixedRotation = true;
+    this.body.setMaterialNamed('court');
+
+    // anchoring (after physics)
+    this.anchor.setTo(0.0, 0.0);
   };
 
   Court.prototype = Object.create(Phaser.Sprite.prototype);

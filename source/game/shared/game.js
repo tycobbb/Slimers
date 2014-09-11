@@ -4,8 +4,11 @@
 
 (function(Slimes) {
   
+  // constants
+  var width = 300;
+  
+  // constructor 
   var Game = function() { 
-    var width = 300;
     Phaser.Game.call(this, width, width / 1.6, Phaser.CANVAS, '');
     this.pixel = new Pixel(this);
   }; 
@@ -76,6 +79,7 @@
   // Namespace Extension
   //  
 
+  Slimes.Game  = Game;
   Slimes.game  = new Game();
   Slimes.start = function() { 
     this.game.state.add('main', Slimes.state, true);
