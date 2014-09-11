@@ -15,8 +15,7 @@
     var material = this.materials('world');
 
     // set the world's gobal physics properties
-    this.p2.gravity.y   = 100.0;
-    this.p2.restitution = 0.8;
+    this.p2.gravity.y = 100.0;
     this.p2.setWorldMaterial(material, true, true, true, true);
 
     return material;
@@ -46,6 +45,15 @@
   Phaser.Physics.P2.Body.prototype.setMaterialNamed = function(name, shape) {
     this.setMaterial(this.game.physics.materials(name), shape);
   };
+
+  //
+  // Forces
+  //
+
+  Phaser.Physics.P2.Body.prototype.applyLinearForce = function(x, y) {
+    this.data.force[0] += x;
+    this.data.force[1] += y;    
+  };
    
   //
   // Options :: private 
@@ -72,7 +80,7 @@
   });
 
   _options.add('slimer', 'court', {
-  
+    restitution: 0.8 
   });
 
   _options.add('slimer', 'ball', {

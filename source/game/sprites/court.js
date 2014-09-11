@@ -10,15 +10,14 @@
     // dimensions
     this.width  = game.world.width;
     this.height = game.world.height - y;
+    this.x      = this.x + game.world.width / 2.0;
+    this.y      = this.y + this.height / 2.0;
 
     // physics
     this.game.physics.p2.enable(this);
     this.body.static        = true;
     this.body.fixedRotation = true;
     this.body.setMaterialNamed('court');
-
-    // anchoring (after physics)
-    this.anchor.setTo(0.0, 0.0);
   };
 
   Court.prototype = Object.create(Phaser.Sprite.prototype);
