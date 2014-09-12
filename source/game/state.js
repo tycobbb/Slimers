@@ -25,8 +25,8 @@
       
       // create the game objects 
       var court   = this.add.court(this.world.centerY);
-      var slimer1 = this.add.slimer(this.world.centerX * 0.5, 0.0);//this.world.centerY); 
-      var slimer2 = this.add.slimer(this.world.centerX * 1.5, 0.0);//this.world.centerY);
+      var slimer1 = this.add.slimer(this.world.centerX * 0.5, this.world.centerY); 
+      var slimer2 = this.add.slimer(this.world.centerX * 1.5, this.world.centerY);
      
       // register collisions
       this.game.physics.materials('world').contact('slimer');

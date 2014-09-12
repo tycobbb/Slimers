@@ -15,7 +15,7 @@
     var material = this.materials('world');
 
     // set the world's gobal physics properties
-    this.p2.gravity.y = 100.0;
+    this.p2.gravity.y = 220.0;
     this.p2.setWorldMaterial(material, true, true, true, true);
 
     return material;
