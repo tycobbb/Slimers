@@ -23,9 +23,8 @@
       shortJumpFrames: 5,
     };
 
-    // setup the slimer's state
-    this.states = Slimer.States.init();
-    this.state  = this.states.NEUTRAL;  
+    // setup the slimer's state machine, default to NEUTRAL
+    this.states = States.enable(this, 'NEUTRAL');
   };
 
   Slimer.prototype = Object.create(Phaser.Sprite.prototype);
@@ -44,164 +43,100 @@
   //
 
   Slimer.prototype.update = function() {
-    var force = { x: 0.0, y: 0.0 }; 
-    // allow the state to perform custom updating
-    this.state.update(this, force);
-    // update state if necessary
-    this.state.transition(this); 
-    // apply force updates
-    this.body.applyLinearForce(force.x, force.y);
+    this.states.update();
   }; 
  
   //
-  // State Class 
+  // States 
   // 
-
-  var State = {
-
-    // inheritance
-    extend: function(attributes) {
-      var inheritor = Object.create(this);
-      _.extend(inheritor, attributes);
-      return inheritor; 
-    },
-    
-    // creation
-    init: function() {
-      var state = Object.create(this);
-      state.reset(); // set any default values
-      return state;
-    },
-
-    // lifecycle
-    reset: function() {
-      this.transitionState = null;  
-    },
-
-    update: function(slimer, force) { 
-      // apply forces from horizontal movement 
-      if(slimer.controls.left.isDown)
-        force.x += slimer.athletics.runForce;
-      if(slimer.controls.right.isDown)
-        force.x -= slimer.athletics.runForce;
-    },
-
-    transition: function(entity) {
-      if(!this.transitionState)
-        return; 
-      // update the entity's state   
-      entity.state = this.transitionState;
-      // and then reset this state so that it can be reused 
-      this.reset();
-    }
-    
-  };
-
-  Slimer.States = {
-
-    init: function() {
-      var states = {};
-
-      for(property in this) {
-        // for each of our properties
-        var value = this[property];
-
-        // if the value is a state, then we'll create a clone of it
-        if(State.isPrototypeOf(value)) {
-          var clone        = _.clone(value);
-          clone.__proto__  = value.__proto__;
-          states[property] = clone;
-        }
-      }
-
-      return states;
-    }
   
-  };
+  // create state storage
+  var States = Slimes.States.create();
+
+  // slimer base state class
+  var State = Slimes.State.extend({        
+
+    update: function(force) { 
+      // apply forces from horizontal movement 
+      if(this.entity.controls.left.isDown)
+        force.x += this.entity.athletics.runForce;
+      if(this.entity.controls.right.isDown)
+        force.x -= this.entity.athletics.runForce;
+    },
+    
+  });
 
   //
   // Neutral State
   //
 
-  Slimer.States.NEUTRAL = State.extend({
+  States.NEUTRAL = State.extend({
      
-    update: function(slimer, force) {
-      this.__proto__.update.call(this, slimer, force);
-      if(slimer.controls.jump.isDown)
-        this.transitionState = slimer.states.JUMP_START;
+    update: function(force) {
+      this.__proto__.update.apply(this, arguments); 
+
+      if(this.entity.controls.jump.isDown)
+        this.states.transitionState = this.states.JUMP_START;
     },   
 
   });
     
-  Slimer.States.JUMP_START = State.extend({
+  States.JUMP_START = State.extend({
 
     reset: function() {
       this.__proto__.reset.call(this);
-      this.frameCount = 0;  
+      this.frames = 0;  
     },
 
-    update: function(slimer, force) {
-      this.__proto__.update.call(this, slimer, force);
+    update: function(force) {
+      this.__proto__.update.apply(this, arguments);
 
-      // when jump is no longer held down, transition to jump 
-      if(!slimer.controls.jump.isDown) {
-        this.transitionState = slimer.states.JUMP;
-        // if jump was released quick enough, perform a short jump 
-        this.transitionState.isShort = this.frameCount < slimer.athletics.shortJumpFrames;
-      }
+      // increment the number of jump frames
+      this.frames++;
+
+      // when the user lets go of jump, we're going to transition 
+      if(!this.entity.controls.jump.isDown) {
+        // resolve jump -- if jump was released quick enough, perform a short jump 
+        this.applyJumpForce(force, this.frames < this.entity.athletics.shortJumpFrames); 
+        // transition to the jumping state
+        this.states.transitionState = this.states.JUMPING;        
+     }
+    },
+
+    //
+    // Helpers
+    //
+
+    applyJumpForce: function(force, isShort) { 
+      force.y += this.entity.game.physics.p2.gravity.y;
+      force.y += isShort ? this.entity.athletics.shortJumpForce : this.entity.athletics.jumpForce;
     },
       
   });  
 
-  Slimer.States.JUMP = State.extend({
-
-    reset: function() {
-      this.__proto__.reset.call(this);
-
-      this.isShort      = false;
-      this.forceApplied = false;
-    },
+  States.JUMPING = State.extend({
 
     update: function(slimer, force) {
-      this.__proto__.update.call(this, slimer, force);
-
-      if(!this.forceApplied) 
-        this.applyJumpForce(slimer, force); 
-    },
-
-    applyJumpForce: function(slimer, force) {
-      force.y = this.isShort ? slimer.athletics.shortJumpForce : slimer.athletics.jumpForce;
-      this.forceApplied = true;
-    },
+      this.__proto__.update.apply(this, arguments);
+    }, 
   
   });
 
-  Slimer.States.NO_JUMPS = State.extend({
+  States.NO_JUMPS = State.extend({
 
     update: function(slime, force) {
-      this.__proto__.update.call(this, slime, force);
+      this.__proto__.update.apply(this, arguments); 
     },
       
   });
 
-  Slimer.States.LANDING = State.extend({
+  States.LANDING = State.extend({
 
     update: function (slime, force) {
-      this.__proto__.update.call(this, slime, force);
+      this.__proto__.update.apply(this, arguments);
     },
     
   });
-
-  //
-  // Utilities
-  //
-
-  function resolveJumpForce() {
-    // naive: if moving vertically, you can't jump
-    if(Math.abs(this.body.velocity.y) > 0.5) 
-      return 0.0;
-    return this.game.physics.p2.gravity.y + this.athletics.jump;
-  }
 
   //
   // Controls
