@@ -7,6 +7,8 @@
   function Slimer(game, x, y) {
     Phaser.Sprite.call(this, game, x, y, 'slimer');
 
+    this.name = 'simer';
+
     // repositioning
     this.y = this.y - this.height / 2.0;
  
@@ -116,23 +118,8 @@
 
   States.JUMPING = State.extend({
 
-    start: function(slimer, attributes) {
-      this.super(arguments);
-      
-      // register collision function 
-      this.collision = slimer.body.onBeginContact.add(function(target) {
-        if(!target || !target.sprite)
-          return;
-        this.shouldLand === this.target.sprite.name === 'court';
-      });
-    },
-
     reset: function() {
-      if(this.collision)
-        this.entity.onBeginContact.remove(this.collision);
-
-      this.didCollide = false; 
- 
+      this.didCollide = false;  
       this.super();  
     },
 
@@ -140,7 +127,12 @@
       this.super(arguments);
 
       if(this.shouldLand)
-        this.transitionState = this.states.LANDING;
+        this.states.transitionState = this.states.LANDING;
+    },
+
+    collide: function(target) {
+      this.super(arguments);
+      this.shouldLand = target.sprite.name === 'court';
     },
 
   });
@@ -159,7 +151,7 @@
       this.super(arguments);
       
       if(this.frames >= this.entity.athletics.jump.endlag)
-        this.transitionState = this.states.NEUTRAL;
+        this.states.transitionState = this.states.NEUTRAL;
     },
     
   });

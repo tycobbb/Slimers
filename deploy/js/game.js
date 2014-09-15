@@ -283,18 +283,43 @@ String.prototype.capitalize = function() {
     
     // lifecycle
     start: function(entity, attributes) {
+      // assosciate entity with the running state 
       this.entity = entity;
+      
+      // apply any transition attributes
       _.extend(this, attributes);
+
+      // register a collision handler if necessary
+      if(this.collide !== State.collide)
+        this.collision = entity.body.onBeginContact.add(this._collide, this);
     },
 
     reset: function() {
+      // deassosciate entity, reset properties 
       this.entity = null;
       this.frames = 0;
+
+      // remove the collision handler if we have one
+      if(this.collision) {
+        this.collision.detach();
+        this.collision = null;
+      }
     },
 
     update: function(force) {
+      // increment frame count every update cycle
       this.frames++;
-    }
+    },
+
+    _collide: function(target) {
+      // sanitize null cases before calling custom handler
+      if(target && target.sprite)
+        this.collide(target);
+    },
+
+    collide: function(target) {
+      
+    },
 
   }); 
 
@@ -448,6 +473,8 @@ String.prototype.capitalize = function() {
   function Court(game, y) {
     Phaser.Sprite.call(this, game, 0.0, y, 'ground');
 
+    this.name = 'court'
+
     // dimensions
     this.width  = game.world.width;
     this.height = game.world.height - y;
@@ -493,6 +520,8 @@ String.prototype.capitalize = function() {
    
   function Slimer(game, x, y) {
     Phaser.Sprite.call(this, game, x, y, 'slimer');
+
+    this.name = 'simer';
 
     // repositioning
     this.y = this.y - this.height / 2.0;
@@ -603,23 +632,8 @@ String.prototype.capitalize = function() {
 
   States.JUMPING = State.extend({
 
-    start: function(slimer, attributes) {
-      this.super(arguments);
-      
-      // register collision function 
-      this.collision = slimer.body.onBeginContact.add(function(target) {
-        if(!target || !target.sprite)
-          return;
-        this.shouldLand === this.target.sprite.name === 'court';
-      });
-    },
-
     reset: function() {
-      if(this.collision)
-        this.entity.onBeginContact.remove(this.collision);
-
-      this.didCollide = false; 
- 
+      this.didCollide = false;  
       this.super();  
     },
 
@@ -627,7 +641,12 @@ String.prototype.capitalize = function() {
       this.super(arguments);
 
       if(this.shouldLand)
-        this.transitionState = this.states.LANDING;
+        this.states.transitionState = this.states.LANDING;
+    },
+
+    collide: function(target) {
+      this.super(arguments);
+      this.shouldLand = target.sprite.name === 'court';
     },
 
   });
@@ -646,7 +665,7 @@ String.prototype.capitalize = function() {
       this.super(arguments);
       
       if(this.frames >= this.entity.athletics.jump.endlag)
-        this.transitionState = this.states.NEUTRAL;
+        this.states.transitionState = this.states.NEUTRAL;
     },
     
   });

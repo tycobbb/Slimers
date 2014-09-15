@@ -7,6 +7,8 @@
   function Court(game, y) {
     Phaser.Sprite.call(this, game, 0.0, y, 'ground');
 
+    this.name = 'court'
+
     // dimensions
     this.width  = game.world.width;
     this.height = game.world.height - y;

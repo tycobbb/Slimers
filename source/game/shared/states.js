@@ -156,18 +156,43 @@
     
     // lifecycle
     start: function(entity, attributes) {
+      // assosciate entity with the running state 
       this.entity = entity;
+      
+      // apply any transition attributes
       _.extend(this, attributes);
+
+      // register a collision handler if necessary
+      if(this.collide !== State.collide)
+        this.collision = entity.body.onBeginContact.add(this._collide, this);
     },
 
     reset: function() {
+      // deassosciate entity, reset properties 
       this.entity = null;
       this.frames = 0;
+
+      // remove the collision handler if we have one
+      if(this.collision) {
+        this.collision.detach();
+        this.collision = null;
+      }
     },
 
     update: function(force) {
+      // increment frame count every update cycle
       this.frames++;
-    }
+    },
+
+    _collide: function(target) {
+      // sanitize null cases before calling custom handler
+      if(target && target.sprite)
+        this.collide(target);
+    },
+
+    collide: function(target) {
+      
+    },
 
   }); 
 
