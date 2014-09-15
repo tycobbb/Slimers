@@ -17,10 +17,16 @@
 
     // physical constants 
     this.athletics = {
-      runForce:  20.0,
-      jumpForce: 170.0,
-      shortJumpForce:  120.0, 
-      shortJumpFrames: 5,
+      run: {
+        force: 20.0,   
+      },
+
+      jump: {
+        startup:    5,
+        endlag:     4,
+        force:      170.0,
+        shortForce: 120.0
+      }
     };
 
     // setup the slimer's state machine, default to NEUTRAL
@@ -51,17 +57,19 @@
   // 
   
   // create state storage
-  var States = Slimes.States.create();
+  var States = Slimes.States.extend();
 
   // slimer base state class
   var State = Slimes.State.extend({        
 
     update: function(force) { 
+      this.super(arguments);
+
       // apply forces from horizontal movement 
       if(this.entity.controls.left.isDown)
-        force.x += this.entity.athletics.runForce;
+        force.x += this.entity.athletics.run.force;
       if(this.entity.controls.right.isDown)
-        force.x -= this.entity.athletics.runForce;
+        force.x -= this.entity.athletics.run.force;
     },
     
   });
@@ -73,7 +81,7 @@
   States.NEUTRAL = State.extend({
      
     update: function(force) {
-      this.__proto__.update.apply(this, arguments); 
+      this.super(arguments); 
 
       if(this.entity.controls.jump.isDown)
         this.states.transitionState = this.states.JUMP_START;
@@ -83,24 +91,16 @@
     
   States.JUMP_START = State.extend({
 
-    reset: function() {
-      this.__proto__.reset.call(this);
-      this.frames = 0;  
-    },
-
     update: function(force) {
-      this.__proto__.update.apply(this, arguments);
+      this.super(arguments);
 
-      // increment the number of jump frames
-      this.frames++;
-
-      // when the user lets go of jump, we're going to transition 
-      if(!this.entity.controls.jump.isDown) {
-        // resolve jump -- if jump was released quick enough, perform a short jump 
-        this.applyJumpForce(force, this.frames < this.entity.athletics.shortJumpFrames); 
+      // check if jump startup is over
+      if(this.frames >= this.entity.athletics.jump.startup) {
+        // resolve jump -- if jump was released before startup finished, perform a short jump 
+        this.applyJumpForce(force, !this.entity.controls.jump.isDown);
         // transition to the jumping state
         this.states.transitionState = this.states.JUMPING;        
-     }
+      }
     },
 
     //
@@ -109,23 +109,46 @@
 
     applyJumpForce: function(force, isShort) { 
       force.y += this.entity.game.physics.p2.gravity.y;
-      force.y += isShort ? this.entity.athletics.shortJumpForce : this.entity.athletics.jumpForce;
+      force.y += isShort ? this.entity.athletics.jump.shortForce : this.entity.athletics.jump.force;
     },
       
   });  
 
   States.JUMPING = State.extend({
 
-    update: function(slimer, force) {
-      this.__proto__.update.apply(this, arguments);
-    }, 
-  
+    start: function(slimer, attributes) {
+      this.super(arguments);
+      
+      // register collision function 
+      this.collision = slimer.body.onBeginContact.add(function(target) {
+        if(!target || !target.sprite)
+          return;
+        this.shouldLand === this.target.sprite.name === 'court';
+      });
+    },
+
+    reset: function() {
+      if(this.collision)
+        this.entity.onBeginContact.remove(this.collision);
+
+      this.didCollide = false; 
+ 
+      this.super();  
+    },
+
+    update: function(force) {
+      this.super(arguments);
+
+      if(this.shouldLand)
+        this.transitionState = this.states.LANDING;
+    },
+
   });
 
   States.NO_JUMPS = State.extend({
 
     update: function(slime, force) {
-      this.__proto__.update.apply(this, arguments); 
+      this.super(arguments); 
     },
       
   });
@@ -133,7 +156,10 @@
   States.LANDING = State.extend({
 
     update: function (slime, force) {
-      this.__proto__.update.apply(this, arguments);
+      this.super(arguments);
+      
+      if(this.frames >= this.entity.athletics.jump.endlag)
+        this.transitionState = this.states.NEUTRAL;
     },
     
   });
