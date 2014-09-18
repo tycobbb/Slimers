@@ -76,12 +76,16 @@
   };
 
   //
-  // Namespace Extension
+  // Exports 
   //  
 
   Slimes.Game  = Game;
   Slimes.game  = new Game();
-  Slimes.start = function() { 
+
+  Slimes.start = function() {
+    // configure the logger
+    logger.level = logger.masks.DEBUG; 
+    // start the game
     this.game.state.add('main', Slimes.state, true);
   };
 

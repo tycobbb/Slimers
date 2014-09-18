@@ -7,7 +7,7 @@
   function Slimer(game, x, y) {
     Phaser.Sprite.call(this, game, x, y, 'slimer');
 
-    this.name = 'simer';
+    this.name = 'slimer';
 
     // repositioning
     this.y = this.y - this.height / 2.0;
@@ -112,6 +112,8 @@
     applyJumpForce: function(force, isShort) { 
       force.y += this.entity.game.physics.p2.gravity.y;
       force.y += isShort ? this.entity.athletics.jump.shortForce : this.entity.athletics.jump.force;
+
+      logger.debug('SLIMER -- applying jump: ' + force.y);
     },
       
   });  
@@ -126,13 +128,13 @@
     update: function(force) {
       this.super(arguments);
 
-      if(this.shouldLand)
+      if(this.didCollide)
         this.states.transitionState = this.states.LANDING;
     },
 
     collide: function(target) {
       this.super(arguments);
-      this.shouldLand = target.sprite.name === 'court';
+      this.didCollide = target.sprite.name === 'court';
     },
 
   });
