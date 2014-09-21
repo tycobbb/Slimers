@@ -5,7 +5,7 @@
 
 (function(Slimes) {
   
-  Slimes.ControlsType = {
+  var ControlsType = {
     
     PLAYER_ONE: { 
       jump:  Phaser.Keyboard.W,
@@ -23,12 +23,20 @@
 
   };
 
-  Slimes.createControls = function(type) {
+  function createControls(type) {
     controls = {}; 
     for(control in type)
       controls[control] = this.game.input.keyboard.addKey(type[control]);
     return controls; 
   };
+
   
+  //
+  // Exports
+  //
+
+  Slimes.ControlsType   = ControlsType;
+  Slimes.createControls = createControls;
+ 
 })(window.Slimes = window.Slimes || {});
 

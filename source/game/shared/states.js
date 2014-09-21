@@ -117,7 +117,7 @@
     },
 
     update: function() {
-      var force = { x: 0.0, y: 0.0 }; 
+      var force = new Phaser.Point();
       // allow the state to perform custom updating
       this.currentState.update(force);
       // update state if necessary
@@ -164,27 +164,59 @@
 
       // register a collision handler if necessary
       if(this.collide !== State.collide)
-        this.collision = entity.body.onBeginContact.add(this._collide, this);
+        this.collision = entity.body.onBeginContact.add(this.onCollide, this);
     },
 
     reset: function() {
-      // deassosciate entity, reset properties 
+      // deassosciate entity
       this.entity = null;
-      this.frames = 0;
-
+      
       // remove the collision handler if we have one
       if(this.collision) {
         this.collision.detach();
-        this.collision = null;
       }
+
+      // destory any macros/macro-handlers
+      if(this.macros) {
+        this.macros.forEach(function(macro) {
+          macro.destroy();  
+        });
+      };
+      
+      // reset properties 
+      this.collision = null;
+      this.macros = null;
+      this.frames = 0;
     },
 
     update: function(force) {
-      // increment frame count every update cycle
+      // increment frame count each update cycle
       this.frames++;
+
+      if(this.frames == 1)
+        this.firstUpdate(force);
+      
+      if(this.macros) {
+        this.macros.forEach(function(macro) {
+          macro.update();  
+        });
+      }
     },
 
-    _collide: function(target) {
+    firstUpdate: function(force) {
+        
+    },
+
+    transition: function(state, attributes) { 
+      if(!state)
+        throw 'STATE ERROR: attempted to transition to an undefined state!';
+      this.states.transitionState      = state;
+      this.states.transitionAttributes = attributes;
+    },
+
+    // collisions
+
+    onCollide: function(target) {
       // sanitize null cases before calling custom handler
       if(target && target.sprite)
         this.collide(target);
@@ -194,6 +226,22 @@
       
     },
 
+    // macros
+
+    addMacro: function(macro) {
+      var self = this;
+
+      if(!self.macros)
+        self.macros = [];
+      self.macros.push(macro);
+
+      macro.onDestroy(function(handler) {
+        self.macros = _.reject(self.macros, function(item) {
+          return item === macro;  
+        }); 
+      });
+    }
+     
   }); 
 
   //

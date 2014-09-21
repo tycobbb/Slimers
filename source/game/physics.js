@@ -4,18 +4,22 @@
 
 (function(Slimes) {
 
+  var Physics = Phaser.Physics,
+      P2      = Phaser.Physics.P2,
+      Body    = Phaser.Physics.P2.Body;
+
   //
   // Bootstrapping
   //
    
-  Phaser.Physics.prototype.startWorld = function() {
+  Physics.prototype.startWorld = function() {
     this.startSystem(Phaser.Physics.P2JS);
     
     // create the world material
     var material = this.materials('world');
 
     // set the world's gobal physics properties
-    this.p2.gravity.y = 220.0;
+    this.p2.gravity.y = 330.0;
     this.p2.setWorldMaterial(material, true, true, true, true);
 
     return material;
@@ -25,14 +29,14 @@
   // Materials
   //
 
-  Phaser.Physics.prototype.materials = function(name) {
+  Physics.prototype.materials = function(name) {
     var material = this.p2.materials[name]; 
     if(!material)
       material = this.p2.createMaterial(name);
     return material; 
   };
 
-  Phaser.Physics.P2.Material.prototype.contact = function(materialName) {
+  P2.Material.prototype.contact = function(materialName) {
     var options = _options.get(this.name, materialName); 
     if(!options) // ensure we have options registered for this contact material
       return null; 
@@ -42,7 +46,7 @@
     return physics.p2.createContactMaterial(this, material, options);
   };
 
-  Phaser.Physics.P2.Body.prototype.setMaterialNamed = function(name, shape) {
+  Body.prototype.setMaterialNamed = function(name, shape) {
     this.setMaterial(this.game.physics.materials(name), shape);
   };
 
@@ -50,9 +54,14 @@
   // Forces
   //
 
-  Phaser.Physics.P2.Body.prototype.applyLinearForce = function(x, y) {
+  Body.prototype.applyLinearForce = function(x, y) {
     this.data.force[0] += x;
     this.data.force[1] += y;    
+  };
+
+  Body.prototype.cancelMomentum = function() {
+    this.velocity.x = 0.0;
+    this.velocity.y = 0.0;  
   };
    
   //
