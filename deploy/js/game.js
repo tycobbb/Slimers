@@ -383,6 +383,16 @@ var c=[];if(1===b.length&&Array.isArray(b[0]))c=b[0].slice(0);else if(Array.isAr
     );  
   };
 
+  Point.scale = function(point, scalar, out) {
+    if(out === undefined)
+      out = new Point();
+
+    out.x = point.x * scalar;
+    out.y = point.y * scalar;
+
+    return out;
+  }
+
   Point.prototype.scale = function(scalar) {
     return this.multiply(scalar, scalar);
   };
@@ -904,8 +914,9 @@ String.prototype.capitalize = function() {
 
       airDash: { 
         duration: 20,
-        force:    200.0,
-        initialSpeed: 400.0, 
+        initialSpeed: 400.0,
+        slowdown: 80.0,
+        slowdownDuration: 10
       }
     };
 
@@ -1099,8 +1110,15 @@ String.prototype.capitalize = function() {
 
     start: function() {
       this.super(arguments);
+      
       // check for the collision, but don't transition to landing 
       this.canLand = false;
+      
+      // precalculate the direction vectors
+      var angle = this.calculateAngle();
+
+      this.directionVector = Phaser.Point.fromAngle(angle);
+      this.reverseVector   = Phaser.Point.fromAngle(angle - Math.PI);
     },
 
     reset: function() {
@@ -1114,34 +1132,33 @@ String.prototype.capitalize = function() {
 
       // ignore gravity during air dash
       this.entity.body.data.gravityScale = 0.0; 
-      // nullify momentum
-      this.entity.body.cancelMomentum(); 
       
-      // determine direction vectors for velocity/force 
-      var angle = this.angle();
-      var impulseSpeed = Phaser.Point.fromAngle(angle - Math.PI);
-      var impulseForce = Phaser.Point.fromAngle(angle);
-       
-      // scale the direction vectors by our speed/force magnitude
-      impulseSpeed.scale(this.entity.athletics.airDash.initialSpeed);
-      impulseForce.scale(this.entity.athletics.airDash.force);
-      
-      // update the body 
-      this.entity.body.velocity.setPoint(impulseSpeed);
-      force.addPoint(impulseForce); 
+      // scale the direction vectors by the speed and force 
+      var airDash      = this.entity.athletics.airDash;
+      var airDashSpeed = Phaser.Point.scale(this.reverseVector, airDash.initialSpeed);
+        
+      // cancel exisiting momentum by overriding speed
+      this.entity.body.velocity.setPoint(airDashSpeed);
     },
      
     update: function(force) {
       this.super(arguments);
 
-      if(this.frames >= this.entity.athletics.airDash.duration)
-        this.transition(this.didCollide ? this.states.NEUTRAL : this.states.FALLING);  
+      var airDash = this.entity.athletics.airDash;
+
+      if(this.frames >= airDash.duration)
+        this.transition(this.didCollide ? this.states.NEUTRAL : this.states.FALLING);
+
+      if(!this.didCollide && this.frames > (airDash.duration - airDash.slowdownDuration)) {
+        var slowdownForce = Phaser.Point.scale(this.reverseVector, airDash.slowdown);
+        force.addPoint(slowdownForce);
+      }  
     },
 
     //
     // Helpers
     
-    angle: function() {
+    calculateAngle: function() {
       var isRight = this.direction.horizontal == Direction.RIGHT;
       var angle   = 0.0;
 

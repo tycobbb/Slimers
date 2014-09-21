@@ -17,6 +17,16 @@
     );  
   };
 
+  Point.scale = function(point, scalar, out) {
+    if(out === undefined)
+      out = new Point();
+
+    out.x = point.x * scalar;
+    out.y = point.y * scalar;
+
+    return out;
+  }
+
   Point.prototype.scale = function(scalar) {
     return this.multiply(scalar, scalar);
   };
