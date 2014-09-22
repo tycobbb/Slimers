@@ -192,6 +192,10 @@
         var firstKey  = combo.keys[0],
             secondKey = combo.keys[1];
         
+        // if the input is left/right or right/left, ignore it
+        if(firstKey !== secondKey && (secondKey === controls.left || secondKey === controls.right))
+          return;
+        
         // create the direction strucutre; a horizontal direction is garunteed
         var direction = {
           horizontal: firstKey == controls.left ? Direction.LEFT : Direction.RIGHT,
