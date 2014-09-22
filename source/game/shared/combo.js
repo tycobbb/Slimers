@@ -165,7 +165,7 @@
       // find the first key pressed from our list, if any.
       findPressedKey: function() {
         return keys.reduce(function(memo, key) {
-          return key.isDown ? key : memo;
+          return key.isDown && key.repeats < combo.stepFrames ? key : memo;
         }, null);   
       },
 

@@ -235,15 +235,10 @@
 
     start: function() {
       this.super(arguments);
-      
       // check for the collision, but don't transition to landing 
-      this.canLand = false;
-      
-      // precalculate the direction vectors
-      var angle = this.calculateAngle();
-
-      this.directionVector = Phaser.Point.fromAngle(angle);
-      this.reverseVector   = Phaser.Point.fromAngle(angle - Math.PI);
+      this.canLand = false; 
+      // precalculate the direction vector
+      this.directionVector = Phaser.Point.fromAngle(this.angle());
     },
 
     reset: function() {
@@ -260,7 +255,7 @@
       
       // scale the direction vectors by the speed and force 
       var airDash      = this.entity.athletics.airDash;
-      var airDashSpeed = Phaser.Point.scale(this.reverseVector, airDash.initialSpeed);
+      var airDashSpeed = Phaser.Point.scale(this.directionVector, airDash.initialSpeed);
         
       // cancel exisiting momentum by overriding speed
       this.entity.body.velocity.setPoint(airDashSpeed);
@@ -269,30 +264,33 @@
     update: function(force) {
       this.super(arguments);
 
-      var airDash = this.entity.athletics.airDash;
-
+      var airDash       = this.entity.athletics.airDash;
+      var slowdownStart = airDash.duration - airDash.slowdownDuration;
+       
+      // if the air dash is over, transition to the correct state 
       if(this.frames >= airDash.duration)
-        this.transition(this.didCollide ? this.states.NEUTRAL : this.states.FALLING);
+        this.transition(this.didCollide ? this.states.NEUTRAL : this.states.FALLING); 
 
-      if(!this.didCollide && this.frames > (airDash.duration - airDash.slowdownDuration)) {
-        var slowdownForce = Phaser.Point.scale(this.reverseVector, airDash.slowdown);
-        force.addPoint(slowdownForce);
+      // else apply an opposing force to diminish the airdash speed 
+      else if(this.frames > slowdownStart && !this.didCollide) {
+        var slowdown = Phaser.Point.scale(this.directionVector, airDash.slowdown);
+        force.addPoint(slowdown);
       }  
     },
 
     //
     // Helpers
     
-    calculateAngle: function() {
-      var isRight = this.direction.horizontal == Direction.RIGHT;
-      var angle   = 0.0;
+    angle: function() {
+      var isLeft = this.direction.horizontal == Direction.LEFT;
+      var angle  = 0.0;
 
-      // if we're going right, add PI (seems backwards) 
-      if(isRight)
+      // if we're going left, add PI
+      if(isLeft)
         angle += Math.PI;
       
       // rotate the air dash based on the second input 
-      var rotationScale = isRight ? -1.0 : 1.0;
+      var rotationScale = isLeft ? 1.0 : -1.0;
       var rotation = Math.PI / 8.0 * rotationScale;
 
       switch(this.direction.vertical) {
