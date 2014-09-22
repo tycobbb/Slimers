@@ -29,7 +29,8 @@
         startup:    5,
         endlag:     4,
         force:      170.0,
-        shortForce: 120.0
+        shortForce: 120.0,
+        mobility:   14.0
       },
 
       fastFall: {
@@ -74,14 +75,21 @@
   
   // create state storage
   var States = Slimes.States.extend();
+  var State  = Slimes.State;
 
-  // slimer base state class
-  var State = Slimes.State.extend({        
+  //
+  // Ground States
+  //
+
+  var Grounded = State.extend({
 
     update: function(force) { 
       this.super(arguments);
 
       // apply forces from horizontal movement 
+      if(this.immobile)
+        return;
+
       if(this.entity.controls.left.isDown)
         force.x += this.entity.athletics.run.force;
       if(this.entity.controls.right.isDown)
@@ -90,11 +98,7 @@
     
   });
 
-  //
-  // Neutral State
-  //
-
-  States.NEUTRAL = State.extend({
+  States.NEUTRAL = Grounded.extend({
 
     start: function(slimer) {
       this.super(arguments);
@@ -110,7 +114,9 @@
 
   });
  
-  States.JUMP_START = State.extend({
+  States.JUMP_START = Grounded.extend({
+
+    immobile: true,
 
     update: function(force) {
       this.super(arguments);
@@ -135,6 +141,21 @@
     },
       
   });
+  
+  States.LANDING = Grounded.extend({
+
+    update: function (slime, force) {
+      this.super(arguments);
+      
+      if(this.frames >= this.entity.athletics.jump.endlag)
+        this.transition(this.states.NEUTRAL);
+    },
+    
+  });
+
+  //
+  // Airborne States
+  //
 
   var Airborne = State.extend({
     
@@ -147,6 +168,13 @@
 
     update: function(force) {
       this.super(arguments);
+      
+      if(!this.immobile) {
+        if(this.entity.controls.left.isDown)
+          force.x += this.entity.athletics.jump.mobility;
+        if(this.entity.controls.right.isDown)
+          force.x -= this.entity.athletics.jump.mobility;
+      }
 
       if(this.didCollide && this.canLand)
         this.transition(this.states.LANDING);
@@ -237,6 +265,8 @@
 
   States.AIR_DASHING = Airborne.extend({
 
+    immobile: true,
+
     start: function() {
       this.super(arguments);
       // check for the collision, but don't transition to landing 
@@ -311,17 +341,6 @@
 
   States.FALLING = Airborne.extend({
 
-  });
-
-  States.LANDING = State.extend({
-
-    update: function (slime, force) {
-      this.super(arguments);
-      
-      if(this.frames >= this.entity.athletics.jump.endlag)
-        this.transition(this.states.NEUTRAL);
-    },
-    
   });
 
   //
