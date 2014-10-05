@@ -807,21 +807,62 @@ String.prototype.capitalize = function() {
   };
 
   _options.add('slimer', 'world', {
-        
+          
   });
 
   _options.add('slimer', 'court', {
-    restitution: 0.8 
+    restitution: 1.0
   });
 
   _options.add('slimer', 'ball', {
-  
+    restitution: 100.0
   });
 
   _options.add('court', 'ball', {
-  
+    restitution: 100.0
   });
  
+})(window.Slimes = window.Slimes || {});
+
+
+//
+// Ball -- ball.js
+//
+
+(function(Slimes) {
+  
+  function Ball(game, x, y) {
+    Phaser.Sprite.call(this, game, x, y, 'ball');
+    
+    this.name = 'ball'
+     
+    // physics 
+    this.game.physics.p2.enable(this);
+    this.body.mass = 0.1;
+    this.body.setMaterialNamed('ball');
+  }
+
+  Ball.prototype = Object.create(Phaser.Sprite.prototype);
+  Ball.prototype.constructor = Ball;
+
+  //
+  // Preload Hooks
+  //
+
+  Slimes.game.onPreload(function(game) {
+    game.load.image('ball', 'assets/ball.png', 10, 10);
+  });
+
+  //
+  // Factory
+  //
+
+  Phaser.GameObjectFactory.prototype.ball = function(x, y, group) {
+    if(typeof group === 'undefined')
+      group = this.world;
+    return group.add(new Ball(this.game, x, y));
+  };
+  
 })(window.Slimes = window.Slimes || {});
 
 
@@ -885,7 +926,7 @@ String.prototype.capitalize = function() {
     this.name = 'slimer';
 
     // repositioning
-    this.y = this.y - this.height / 2.0;
+    this.y = this.y - this.height;
  
     // physics
     this.game.physics.p2.enable(this);
@@ -923,7 +964,7 @@ String.prototype.capitalize = function() {
 
     // setup the slimer's state machine, default to NEUTRAL
     this.states = States.enable(this, 'NEUTRAL');
-  };
+  }
 
   Slimer.prototype = Object.create(Phaser.Sprite.prototype);
   Slimer.prototype.constructor = Slimer;
@@ -1265,13 +1306,16 @@ String.prototype.capitalize = function() {
       var world = this.game.physics.startWorld();
       
       // create the game objects 
-      var court   = this.add.court(this.world.centerY);
-      var slimer1 = this.add.slimer(this.world.centerX * 0.5, this.world.centerY); 
-      var slimer2 = this.add.slimer(this.world.centerX * 1.5, this.world.centerY);
+      var court   = this.add.court(this.world.height - 55.0);
+      var slimer1 = this.add.slimer(this.world.centerX * 0.5, court.y); 
+      var slimer2 = this.add.slimer(this.world.centerX * 1.5, court.y);
+      var ball    = this.add.ball(slimer1.x, slimer1.y - 45.0);
      
       // register collisions
       this.game.physics.materials('world').contact('slimer');
       this.game.physics.materials('slimer').contact('court');
+      this.game.physics.materials('slimer').contact('ball');
+      this.game.physics.materials('court').contact('ball');
  
       // add controls
       slimer1.registerControls(Slimes.ControlsType.PLAYER_ONE);

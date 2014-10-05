@@ -10,7 +10,7 @@
     this.name = 'slimer';
 
     // repositioning
-    this.y = this.y - this.height / 2.0;
+    this.y = this.y - this.height;
  
     // physics
     this.game.physics.p2.enable(this);
@@ -48,7 +48,7 @@
 
     // setup the slimer's state machine, default to NEUTRAL
     this.states = States.enable(this, 'NEUTRAL');
-  };
+  }
 
   Slimer.prototype = Object.create(Phaser.Sprite.prototype);
   Slimer.prototype.constructor = Slimer;

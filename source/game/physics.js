@@ -85,19 +85,19 @@
   };
 
   _options.add('slimer', 'world', {
-        
+          
   });
 
   _options.add('slimer', 'court', {
-    restitution: 0.8 
+    restitution: 1.0
   });
 
   _options.add('slimer', 'ball', {
-  
+    restitution: 100.0
   });
 
   _options.add('court', 'ball', {
-  
+    restitution: 100.0
   });
  
 })(window.Slimes = window.Slimes || {});
